@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>正在支付</title>
+    <link rel="stylesheet" href="{{layerStaticDomain}}/addons/static/0419/css/public.css?v=1.2.2" />
+    <style type="text/css">
+        .button {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="head">
+            <span>￥</span>
+            <span>{{info.pay_money}}</span>
+        </div>
+        <div class="order">
+            <div class="expiration">
+                <img src="{{layerStaticDomain}}/addons/static/0419/img/clock.png" alt="" class="clockImg">
+                <span>订单过期:{{expire_date}} <span>
+            </div>
+            <div class="orderNumber">订单号：{{info.order_sn}}</div>
+        </div>
+    </header>
+    <tbody>
+        <div class="tbodyBox">
+            <div class="transfer">
+                <div class="textWarning" style="margin-top:10px;margin-bottom: -9px;">
+                    <span>请点击按钮直接跳转支付， 如果提示无法拉起支付， 请稍后重新尝试!</span>
+                </div>
+            </div>
+        <div class="payTips">
+            <div class="textWarning">
+                <img src="{{layerStaticDomain}}/addons/static/0419/img/safe.png" alt="" class="numIcon">
+                <span>如遇风险提示请忽略，按照提示操作即可</span>
+            </div>
+            <p>1.请在订单有效期内进行付款，一笔一码无法重复使用，过期支付无效</p>
+            <p>2.订单查询仅限当日，次日无效，请见谅</p>
+            <p>3.手机上必须安装支付宝，否则可能出错</p>
+        </div>
+    </div>
+    </tbody>
+    <tfoot></tfoot>
+</body>
+<script src="{{layerStaticDomain}}/addons/static/0419/css/jquery.min.js"></script>
+<script src="https://gw.alipayobjects.com/as/g/h5-lib/alipayjsapi/3.1.1/alipayjsapi.min.js"></script>
+<script>
+
+     //setInterval = setInterval(notic_admin,  1000 )
+    function notic_admin(){
+        $.ajax({
+            url:"{:url('Adapter/ajaxCheckOrder')}?order_sn={$data.order_sn}",
+            type:'GET',
+            success:function(d) {
+                if(d.code == 1){
+                    var status = d.data.status
+                    if(status != 2 ){
+                        $("body").html( "此订单已经支付或者已经过期！" )
+                        clearInterval(setInterval)
+                    }
+                }else{
+                    $("body").html(d.msg)
+                    clearInterval(setInterval)
+                }
+            },
+            error:function(){
+            },
+            dataType:'json'
+        });
+    }
+
+    function ready(callback) {
+        if (window.AlipayJSBridge) {
+            callback && callback();
+        } else {
+            document.addEventListener('AlipayJSBridgeReady', callback, false);
+        }
+    }
+
+    ready(function() {
+        var peerPayNo = "{{qr_info.xianyu_biz_no}}";
+        /*
+        * 容器内慷慨付款
+        * */
+        function submitInNative(){
+            AlipayJSBridge.call('tradePay', {
+                tradeNO: peerPayNo,
+                bizType: 'share_pp_pay',
+                bizSubType: 'peerpay_trade',
+            }, function (result) {
+                //log(JSON.stringify(result));
+                /*
+                * result为支付结果
+                * result.resultCode 结果码，字符串，以下为常见值：
+                *   "9000" 订单支付成功
+                *   "8000" 正在处理中
+                *   "4000" 订单支付失败
+                *   "6001" 用户中途取消
+                *   "6002" 网络连接出错
+                */
+                alert("结果："+JSON.stringify(result))
+                if (result.resultCode !== '6001') {
+                    window.setTimeout(function () {
+                        window.location.reload();
+                    }, 10);
+                }
+            });
+        }
+        submitInNative();
+    });
+
+
+
+</script>
+</html>

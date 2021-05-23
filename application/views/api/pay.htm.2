@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>{{currency_name}}支付中</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no,viewport-fit=contain"/>
+    <!-- UC强制竖屏 -->
+    <meta name="screen-orientation" content="portrait"/>
+    <!-- QQ强制竖屏 -->
+    <meta name="x5-orientation" content="portrait"/>
+    <!-- UC强制全屏 -->
+    <meta name="full-screen" content="yes"/>
+    <!-- QQ强制全屏 -->
+    <meta name="x5-fullscreen" content="true"/>
+    <!-- UC应用模式 -->
+    <meta name="browsermode" content="application"/>
+    <!-- QQ应用模式 -->
+    <meta name="x5-page-mode" content="app"/>
+    <!-- windows phone 点击无高光 -->
+    <meta name="msapplication-tap-highlight" content="no"/>
+    <!-- 适应移动端 END -->
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <script src="{{layerStaticDomain}}/static/js/jquery.min.js"></script>
+    <script src="{{layerStaticDomain}}/static/js/clipboard.min.js"></script>
+    <style>
+        body{ overflow:hidden;  background-color: #0f8eea; }
+        .header{ padding: 15px 15px 0px 15px; }
+        .header .theader{ display: -webkit-flex; display: flex; align-content: center; }
+        .header .title{ width: 100%; text-align: center; font-weight: bolder; color: #fff; }
+        .container{ padding: 15px;}
+        .container .main{ text-align: center; background-color: #fff; border-style:solid; border-color:#fff;  border-radius: 8px; font-size: 14px; }
+        .container .main .title{ font-size: 16px; font-weight: bold; padding: 15px 10px; border-bottom: 1px solid #fbfbfc; }
+        .container .main .item{ padding: 15px;}
+        .container .main .remark{ margin-bottom: 15px; padding: 0px 10px 5px 10px; text-align: center; font-weight: bold; }
+        .container .main .remark input{ width: 100%;font-size: 14px;border: 0px;text-align: center; outline:none;}
+        .container .main .remark button{ width: 100%; height: 36px;border: 0px; border-radius: 4px;outline:none;}
+        .container .main .tips{ text-align: left; line-height: 16px; padding: 0px 10px 5px 10px;}
+        .container .main .tips p{ font-size: 13px;  }
+    </style>
+</head>
+<body style="overflow:scroll;max-width:450px;margin-left:auto;margin-right:auto;">
+<div class="header">
+    <div class="theader">
+        <div class="title"><span>USDT-TRC20充值</span></div>
+    </div>
+</div>
+<div class="container">
+    <div class="main">
+        <div class="item">
+            <div id="code">
+                <img src="{{qr_pic}}" alt="">
+            </div>
+        </div>
+        <div class="remark">
+            <h3><span>{{info.money}}</span> USDT</h3>
+            <input type="text" readonly value="{{info.address}}" id="addr"/>
+            <p><button type="button" class="addr" data-clipboard-target="#addr">复制地址</button></p>
+        </div>
+        <div class="tips">
+            <h2>温馨提示</h2>
+            <p>1.请按上面USDT金额充值；</p>
+            <p>2.<span>当前汇率 1USDT等于{{info.f_rate}}人民币；</span></p>
+            <p>3.区块有记录，充值确认数不够，请耐心等待！由网络矿工自动确认。</p>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function(){
+        new ClipboardJS('.addr').on('success', function(e) {
+            e.clearSelection();
+            Toast(e.text,2000);
+        });
+    });
+
+    function Toast(msg,duration){
+        duration=isNaN(duration)?3000:duration;
+        var m = document.createElement('div');
+        m.innerHTML = msg;
+        m.style.cssText="max-width:88%;min-width: 150px;padding:0 10px;height: 40px;color: rgb(255, 255, 255);line-height: 40px;text-align: center;border-radius: 4px;position: fixed;top: 80%;left: 50%;transform: translate(-50%, -50%);z-index: 999999;background: rgba(0, 0, 0,.7);font-size: 14px;";
+        document.body.appendChild(m);
+        setTimeout(function() {
+            var d = 0.5;
+            m.style.webkitTransition = '-webkit-transform ' + d + 's ease-in, opacity ' + d + 's ease-in';
+            m.style.opacity = '0';
+            setTimeout(function() { document.body.removeChild(m) }, d * 1000);
+        }, duration);
+    }
+
+    var intervalOrderInfo = setInterval(function () {
+        $.post("/Api_pay/query", {
+            order_sn: "{{info.order_sn}}"
+        }, function (response) {
+            var data = response;
+            //console.log(data)
+            var status = data.data.status
+            if (status == 2 ) {
+                clearInterval(intervalOrderInfo);
+                $("body").html("<h1><center style='color:green;'>付款成功</center></h1>")
+                //location.reload()
+            } else{
+                if( status != 1 ){
+                    clearInterval(intervalOrderInfo);
+                    $("body").html("<h1><center>订单异常，请刷新页面</center></h1>")
+                }
+            }
+        }, "json");
+    }, 1000);
+</script>
+</body>
+</html>
