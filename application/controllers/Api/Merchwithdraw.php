@@ -15,6 +15,9 @@ class Api_MerchwithdrawController extends Api_CommonController
         $Business = Common::ImportBusiness("MerchWithdraw" ,"Api" );
         $params = $_REQUEST ;
         global $_G;
+        $log = Log_file::getInstance( array('filename' => "MerchWithdraw" ) );
+        $log->Write("info" , "商户请求参数:" . json_encode($params ,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ));
+
         try{
             $data = $Business->apply($params);
             $resp = [
@@ -23,6 +26,7 @@ class Api_MerchwithdrawController extends Api_CommonController
             ];
             $this->echoJson( 1, "提现申请成功，请稍后等待结果" , $resp );
         }catch(Exception $e ){
+            $log->Write("info" , "下单失败:" . $e->getMessage());
             $this->echoJson( $e->getCode(),$e->getMessage() );
         }
     }
